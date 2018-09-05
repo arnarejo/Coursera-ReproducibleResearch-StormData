@@ -1,5 +1,5 @@
 ---
-title: 'Reproducible Research - Storm Data'
+title: 'Impact of various weather events on property and health'
 author: "Abdul Rasheed Narejo, CFA"
 date: "August 27, 2018"
 output:
@@ -15,12 +15,13 @@ output:
     fig_height: 6
 ---
 
-## Introduction
+## INTRODUCTION
 Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
 
 This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
 
-## Load required libraries
+## DATA PROCESSING
+### Loading required libraries
 
 ```{r echo = TRUE, message=FALSE, warning=FALSE}
 library(data.table)
@@ -30,35 +31,39 @@ library(ggthemes) # use themes to beautify graphs
 library(ggplot2) # ggplot for data visualization
 ```
 
-## Loading and preprocessing the data
+### Loading the data
 
 ### Load the data (read.csv())
 ```{r echo = TRUE}
 url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
-if (!file.exists("./data/stormData.csv.bz2")) {
-    download.file(url, destfile = "./data/stormData.csv.bz2", 
-              method = "curl",
-              mode = "web")    
-} else {
-    message("file already exists!")
-}
 
 if (!file.exists("./data/stormData.csv")) {
+    if (!file.exists("./data/stormData.csv.bz2")) {
+        download.file(url, destfile = "./data/stormData.csv.bz2", 
+              method = "curl",
+              mode = "web")
+        message("successfuly downloaded file")
+    }
     bunzip2("stormData.csv.bz2", "./data/stormData.csv", remove = FALSE, skip = TRUE)
-    message("Successfuly unzipped file")
+    message("Successfuly unzipped file")        
+} else {
+    message("file already exists!")    
 }
 
 ```
 
 ```{r}
-stormData <- read.csv("stormData.csv")
-save(stormData, file="stormData.RData")
+# stormData <- read.csv("./data/stormData.csv")
+# save(stormData, file="./data/stormData.RData")
+load("./data/stormData.RData")
+names(stormData)
 ```
 ```{r}
-head(stormData)
+humanCost <- stormData %>% group_by(EVTYPE) %>% summarize(totalFatalities = sum(FATALITIES), totalInjuries = sum(INJURIES), totalDamage = totalFatalities + totalInjuries) %>% arrange(desc(totalDamage)) %>% top_n(100)
+unique(humanCost$EVTYPE)
 ```
+
 ```{r}
-str(stormData)
+economicCost <- stormData %>% group_by(EVTYPE) %>% summarize(totalPropDamage = sum(PROPDMG), totalCropDamage = sum(CROPDMG), totalDamage = totalPropDamage + totalCropDamage) %>% arrange(desc(totalDamage)) %>% top_n(5)
+head(economicCost)
 ```
-
-
